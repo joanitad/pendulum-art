@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendulum Art</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0b09;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #141008 0%, #0d0b09 100%);
+  }
+  canvas {
+    border-radius: 10px;
+    box-shadow: 0 0 60px rgba(160, 120, 60, 0.06), 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  #panel {
+    width: 272px;
+    background: #100e0c;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    border-left: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #c8a96a;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  .palette {
+    display: flex;
+    gap: 7px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.active {
+    border-color: rgba(200,169,106,0.8);
+    transform: scale(1.15);
+  }
+  .custom-color-wrap {
+    position: relative;
+    width: 28px; height: 28px;
+  }
+  .custom-color-wrap input[type="color"] {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+  }
+  .custom-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: conic-gradient(#b5412a, #c8a84a, #3d7a5c, #1a3a5c, #6a3a6a, #b5412a);
+    border: 2px solid transparent;
+    pointer-events: none;
+  }
+  .custom-color-wrap.active .custom-swatch {
+    border-color: rgba(200,169,106,0.8);
+  }
+
+  .section-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: #2e2a24;
+    text-align: center;
+    margin-bottom: -6px;
+  }
+
+  .slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .slider-label {
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #4a4238;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #1e1a14;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: none;
+    background: currentColor;
+    cursor: pointer;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .big-btn {
+    padding: 13px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .big-btn:active { transform: scale(0.98); }
+  .big-btn:hover { opacity: 0.88; }
+
+  #goBtn {
+    background: #c8a96a;
+    color: #100e0c;
+  }
+  #goBtn.running {
+    background: #8a6a40;
+    color: #e8dcc8;
+  }
+  #layerBtn {
+    background: #2e3a30;
+    color: #7a9a7e;
+    border: 1px solid #3a4a3c;
+  }
+  .small-btn {
+    padding: 9px;
+    border: 1px solid #1e1a14;
+    background: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #3a3228;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  #clearBtn:hover { border-color: #8a5a3a; color: #8a5a3a; }
+  #saveBtn:hover  { border-color: #c8a96a; color: #c8a96a; }
+  #undoBtn:hover  { border-color: #6a8a6a; color: #6a8a6a; }
+
+  .toggle-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .fx-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.58rem;
+    color: #4a4238;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+  }
+  .fx-toggle input { display: none; }
+  .toggle-track {
+    width: 30px; height: 15px;
+    background: #1e1a14;
+    border-radius: 8px;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: #2e2a24;
+    top: 2px; left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .fx-toggle input:checked + .toggle-track { background: #3a2e1a; }
+  .fx-toggle input:checked + .toggle-track::after {
+    transform: translateX(15px);
+    background: #c8a96a;
+  }
+  #surpriseBtn {
+    background: #1e2a22;
+    color: #6a9a72;
+    border: 1px solid #2a3a2c;
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-area">
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="panel">
+  <div class="title">Pendulum Art</div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="section-label">Canvas</div>
+  <div class="palette" id="bgPalette"></div>
+  <div class="section-label" style="margin-bottom:0">click canvas to move the pendulum</div>
+
+  <div class="section-label">Style</div>
+  <div class="slider-group">
+    <div class="slider-row"><span class="slider-label">Length</span></div>
+    <input type="range" data-param="length" min="0.35" max="1.0" step="0.01" value="0.85" style="color:#c8a96a;background:#c8a96a18">
+  </div>
+  <div class="slider-group">
+    <div class="slider-row"><span class="slider-label">Weight</span></div>
+    <input type="range" data-param="thickness" min="1" max="12" step="0.5" value="2.5" style="color:#8a7a5a;background:#8a7a5a18">
+  </div>
+  <div class="slider-group">
+    <div class="slider-row"><span class="slider-label">Direction</span></div>
+    <input type="range" data-param="direction" min="0" max="6.28" step="0.01" value="0.8" style="color:#6a7a6a;background:#6a7a6a18">
+  </div>
+  <div class="slider-group">
+    <div class="slider-row"><span class="slider-label">Speed</span></div>
+    <input type="range" id="speedSlider" min="0.3" max="3.0" step="0.1" value="1.0" style="color:#7a6a5a;background:#7a6a5a18">
+  </div>
+
+  <div class="section-label">Effects</div>
+  <div class="toggle-row">
+    <label class="fx-toggle">
+      <input type="checkbox" id="colorShiftToggle">
+      <div class="toggle-track"></div>
+      <span>Color shift</span>
+    </label>
+    <label class="fx-toggle">
+      <input type="checkbox" id="mirrorToggle">
+      <div class="toggle-track"></div>
+      <span>Mirror</span>
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="big-btn" id="goBtn">CREATE</button>
+    <button class="big-btn" id="surpriseBtn">SURPRISE ME</button>
+    <button class="big-btn" id="layerBtn">+ NEW LAYER</button>
+    <button class="small-btn" id="undoBtn">UNDO LAYER</button>
+    <button class="small-btn" id="saveBtn">SAVE ART</button>
+    <button class="small-btn" id="clearBtn">START FRESH</button>
+  </div>
+</div>
+
+<script>
+// ============ WebGL Setup ============
+const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true, antialias: true, alpha: false });
+if (!gl) { alert('WebGL not supported'); }
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+function resize() {
+  const area = document.getElementById('canvas-area');
+  const s = Math.min(area.clientWidth - 40, area.clientHeight - 40);
+  canvas.width = s;
+  canvas.height = s;
+  gl.viewport(0, 0, s, s);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============ Shaders ============
+const lineVS = `
+  attribute vec2 aPos;
+  attribute float aAlpha;
+  varying float vAlpha;
+  void main() {
+    vAlpha = aAlpha;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+  }
+`;
+const lineFS = `
+  precision mediump float;
+  uniform vec3 uColor;
+  varying float vAlpha;
+  void main() {
+    gl_FragColor = vec4(uColor, vAlpha * 0.9);
+  }
+`;
+const quadVS = `
+  attribute vec2 aPos;
+  varying vec2 vUV;
+  void main() {
+    vUV = aPos * 0.5 + 0.5;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+  }
+`;
+function compileShader(src, type) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+    console.error(gl.getShaderInfoLog(s));
+  return s;
+}
+function createProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compileShader(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, compileShader(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p);
+  return p;
+}
+
+const lineProg = createProgram(lineVS, lineFS);
+const lineAPos = gl.getAttribLocation(lineProg, 'aPos');
+const lineAAlpha = gl.getAttribLocation(lineProg, 'aAlpha');
+const lineUColor = gl.getUniformLocation(lineProg, 'uColor');
+
+// Fullscreen quad
+const quadBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+// Line buffer
+const MAX_TRAIL = 200000;
+const trailData = new Float32Array(MAX_TRAIL * 3);
+const trailBuf = gl.createBuffer();
+let trailCount = 0;
+
+// Framebuffers for bloom
+function createFBO() {
+  const fb = gl.createFramebuffer();
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return { fb, tex };
+}
+// ============ Accumulated art texture ============
+const artFBO = createFBO();
+let artInit = false;
+function initArt() {
+  const s = canvas.width;
+  gl.bindTexture(gl.TEXTURE_2D, artFBO.tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, s, s, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, artFBO.fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, artFBO.tex, 0);
+  // transparent: strokes are composited over the chosen canvas color at
+  // display time, so the background can change even after drawing
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  artInit = true;
+}
+
+// Blit shader (just draw a texture)
+const blitFS = `
+  precision mediump float;
+  uniform sampler2D uTex;
+  varying vec2 vUV;
+  void main() { gl_FragColor = texture2D(uTex, vUV); }
+`;
+const blitProg = createProgram(quadVS, blitFS);
+const blitAPos = gl.getAttribLocation(blitProg, 'aPos');
+const blitUTex = gl.getUniformLocation(blitProg, 'uTex');
+
+function drawQuad(prog, aPos) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// ============ Color palette ============
+// Artist pigment palette: indigo, venetian red, ochre, viridian, prussian blue,
+// burnt sienna, alizarin, raw umber, lead white, ivory black
+const colors = [
+  '#4a4e7a','#b5402a','#c8a44a','#3d7a58','#1a3a5c',
+  '#a05828','#c03a58','#7a5c38','#ddd8cc','#2a2420'
+];
+let currentColor = colors[0];
+const paletteEl = document.getElementById('palette');
+
+function hexToRGB(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  return [r, g, b];
+}
+
+colors.forEach(c => {
+  const s = document.createElement('div');
+  s.className = 'swatch' + (c === currentColor ? ' active' : '');
+  s.style.background = c;
+  s.style.color = c;
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.swatch,.custom-color-wrap').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    currentColor = c;
+    presentIdle();
+  });
+  paletteEl.appendChild(s);
+});
+
+// ============ Canvas (background) colors ============
+const bgColors = ['#0d0b09', '#c8c4bc', '#d4c8b0'];
+let bgColor = bgColors[0];
+const bgPaletteEl = document.getElementById('bgPalette');
+bgColors.forEach(c => {
+  const s = document.createElement('div');
+  s.className = 'swatch' + (c === bgColor ? ' active' : '');
+  s.style.background = c;
+  s.style.color = c;
+  if (c === '#000000') s.style.boxShadow = 'inset 0 0 0 1px #2a2a3a';
+  s.addEventListener('click', () => {
+    bgPaletteEl.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    bgColor = c;
+    presentIdle();
+  });
+  bgPaletteEl.appendChild(s);
+});
+
+const bgCustomWrap = document.createElement('div');
+bgCustomWrap.className = 'custom-color-wrap';
+bgCustomWrap.innerHTML = '<div class="custom-swatch"></div><input type="color" value="#123040">';
+const bgCustomInput = bgCustomWrap.querySelector('input');
+bgCustomInput.addEventListener('input', () => {
+  bgColor = bgCustomInput.value;
+  bgPaletteEl.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+  bgCustomWrap.classList.add('active');
+  presentIdle();
+});
+bgPaletteEl.appendChild(bgCustomWrap);
+
+const customWrap = document.createElement('div');
+customWrap.className = 'custom-color-wrap';
+customWrap.innerHTML = '<div class="custom-swatch"></div><input type="color" value="#ff00ff">';
+const customInput = customWrap.querySelector('input');
+customInput.addEventListener('input', () => {
+  currentColor = customInput.value;
+  document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+  customWrap.classList.add('active');
+  presentIdle();
+});
+paletteEl.appendChild(customWrap);
+
+// ============ Slider controls ============
+const params = {};
+document.querySelectorAll('input[type="range"][data-param]').forEach(slider => {
+  const key = slider.dataset.param;
+  params[key] = parseFloat(slider.value);
+  slider.addEventListener('input', () => {
+    params[key] = parseFloat(slider.value);
+    presentIdle();
+  });
+});
+
+// ============ Paint-pendulum physics ============
+// A paint bucket on a string over a flat canvas: a lightly damped 2D
+// pendulum. Slightly detuned x/y periods make the elliptical orbit
+// precess, weaving the classic spirograph web as it decays.
+let px, py, vx, vy;
+let running = false;
+let stopping = false; // true while gracefully winding down
+let animId = null;
+let prevPos = null;
+
+// per-run character (re-rolled on each CREATE for variety)
+let freqX, freqY, dampRate;
+
+function initPendulum() {
+  const dir = params.direction;
+  // amp * the 0.85 display scale reaches ~1.0 (canvas edge) at max Length
+  const amp = params.length * 1.18;
+
+  // start pulled out to one side, released with a modest sideways push.
+  // Keeping the push well below circular speed makes the orbit a clearly
+  // eccentric ellipse, so the Direction slider visibly rotates the pattern.
+  px = Math.cos(dir) * amp;
+  py = Math.sin(dir) * amp;
+  const push = 0.55 * params.length;
+  vx = -Math.sin(dir) * push;
+  vy = Math.cos(dir) * push;
+
+  // longer string = slower, statelier swing (omega ~ 1/sqrt(L))
+  const base = 2.1 / Math.sqrt(params.length);
+  const detune = 1.012 + Math.random() * 0.01;
+  freqX = base;
+  freqY = base * detune;
+  // barely-there decay: the orbit shrinks very gradually and the user
+  // decides when the piece is done (STOP bakes it, CREATE starts fresh)
+  dampRate = 0.006;
+}
+
+function stepPhysics(dt) {
+  const r2 = px * px + py * py;
+  const nl = 1 + 0.22 * r2;
+  // when winding down, ramp damping up so the pendulum glides to rest
+  const effectiveDamp = stopping ? dampRate + 4.0 : dampRate;
+  const ax = (-freqX * freqX * nl) * px - effectiveDamp * vx;
+  const ay = (-freqY * freqY * nl) * py - effectiveDamp * vy;
+  vx += ax * dt;
+  vy += ay * dt;
+  px += vx * dt;
+  py += vy * dt;
+}
+
+// pendulum pivot: set by clicking the canvas (clip coords, 0,0 = middle)
+let centerX = 0, centerY = 0;
+
+function getPenPos() {
+  return { x: centerX + px * 0.85, y: centerY + py * 0.85 };
+}
+
+// Click or drag on the main canvas to place the pendulum pivot
+function setCenter(x, y) {
+  centerX = Math.max(-0.95, Math.min(0.95, x));
+  centerY = Math.max(-0.95, Math.min(0.95, y));
+  presentIdle();
+}
+
+function canvasPoint(e) {
+  const rect = canvas.getBoundingClientRect();
+  setCenter(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    1 - ((e.clientY - rect.top) / rect.height) * 2
+  );
+}
+
+let canvasDragging = false;
+canvas.addEventListener('pointerdown', e => {
+  if (running) return; // don't move the pivot mid-swing
+  canvasDragging = true;
+  canvas.setPointerCapture(e.pointerId);
+  canvasPoint(e);
+});
+canvas.addEventListener('pointermove', e => { if (canvasDragging) canvasPoint(e); });
+canvas.addEventListener('pointerup', () => { canvasDragging = false; });
+
+// ============ Speed, color shift, mirror ============
+const speedSlider = document.getElementById('speedSlider');
+const colorShiftToggle = document.getElementById('colorShiftToggle');
+const mirrorToggle = document.getElementById('mirrorToggle');
+let colorHue = 0; // degrees, used when color shift is on
+
+function rgbToHsl(r, g, b) {
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+      case g: h = ((b-r)/d + 2)/6; break;
+      default: h = ((r-g)/d + 4)/6;
+    }
+  }
+  return [h*360, s, l];
+}
+function hslToRgb(h, s, l) {
+  h /= 360;
+  const q = l < 0.5 ? l*(1+s) : l+s-l*s, p = 2*l-q;
+  const hue2rgb = (p,q,t) => {
+    if (t<0) t+=1; if (t>1) t-=1;
+    if (t<1/6) return p+(q-p)*6*t;
+    if (t<1/2) return q;
+    if (t<2/3) return p+(q-p)*(2/3-t)*6;
+    return p;
+  };
+  return [hue2rgb(p,q,h+1/3), hue2rgb(p,q,h), hue2rgb(p,q,h-1/3)];
+}
+
+function pushSegments(verts, x0, y0, x1, y1, pixW) {
+  const dx = x1-x0, dy = y1-y0;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 0.00001) return;
+  const wf = Math.min(2.2, Math.max(0.55, Math.sqrt(0.0012/len)));
+  const nx = -dy/len*pixW*wf, ny = dx/len*pixW*wf;
+  verts.push(
+    x0-nx, y0-ny, 1.0,  x0+nx, y0+ny, 1.0,  x1-nx, y1-ny, 1.0,
+    x1-nx, y1-ny, 1.0,  x0+nx, y0+ny, 1.0,  x1+nx, y1+ny, 1.0
+  );
+}
+
+function flushVerts(verts, rgb) {
+  if (verts.length === 0) return;
+  const s = canvas.width;
+  const vertArr = new Float32Array(verts);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, artFBO.fb);
+  gl.viewport(0, 0, s, s);
+  gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(lineProg);
+  gl.uniform3f(lineUColor, rgb[0], rgb[1], rgb[2]);
+  gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, vertArr, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(lineAPos);
+  gl.vertexAttribPointer(lineAPos, 2, gl.FLOAT, false, 12, 0);
+  gl.enableVertexAttribArray(lineAAlpha);
+  gl.vertexAttribPointer(lineAAlpha, 1, gl.FLOAT, false, 12, 8);
+  gl.drawArrays(gl.TRIANGLES, 0, vertArr.length / 3);
+}
+
+// ============ Undo: snapshot artFBO into a second texture before each run ============
+const undoFBO = createFBO();
+let undoAvailable = false;
+function snapshotForUndo() {
+  const s = canvas.width;
+  gl.bindTexture(gl.TEXTURE_2D, undoFBO.tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, s, s, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, undoFBO.fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, undoFBO.tex, 0);
+  // copy artFBO → undoFBO
+  gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.blendFunc(gl.ONE, gl.ZERO);
+  gl.useProgram(blitProg);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, artFBO.tex);
+  gl.uniform1i(blitUTex, 0);
+  drawQuad(blitProg, blitAPos);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  undoAvailable = true;
+}
+function applyUndo() {
+  if (!undoAvailable) return;
+  const s = canvas.width;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, artFBO.fb);
+  gl.viewport(0, 0, s, s);
+  gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.blendFunc(gl.ONE, gl.ZERO);
+  gl.useProgram(blitProg);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, undoFBO.tex);
+  gl.uniform1i(blitUTex, 0);
+  drawQuad(blitProg, blitAPos);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  undoAvailable = false;
+  presentIdle();
+}
+
+// ============ Render loop ============
+function render() {
+  if (!artInit) initArt();
+
+  const speed = parseFloat(speedSlider.value);
+  const substeps = 120;
+  const dt = (0.08 * speed) / substeps;
+  const s = canvas.width;
+  const thick = params.thickness;
+  const pixW = thick / s;
+  const mirror = mirrorToggle.checked;
+  const colorShift = colorShiftToggle.checked;
+
+  // advance hue for color shift
+  if (colorShift) colorHue = (colorHue + speed * 0.4) % 360;
+
+  let rgb;
+  if (colorShift) {
+    const base = hexToRGB(currentColor);
+    const [h, sat, lig] = rgbToHsl(base[0], base[1], base[2]);
+    rgb = hslToRgb((h + colorHue) % 360, Math.max(sat, 0.4), Math.max(lig, 0.35));
+  } else {
+    rgb = hexToRGB(currentColor);
+  }
+
+  const newVerts = [];
+  for (let i = 0; i < substeps; i++) {
+    const pos = getPenPos();
+    if (prevPos) {
+      pushSegments(newVerts, prevPos.x, prevPos.y, pos.x, pos.y, pixW);
+      if (mirror) {
+        // reflect across both axes — 4 copies total including original
+        pushSegments(newVerts, -prevPos.x, prevPos.y, -pos.x, pos.y, pixW);
+        pushSegments(newVerts, prevPos.x, -prevPos.y, pos.x, -pos.y, pixW);
+        pushSegments(newVerts, -prevPos.x, -prevPos.y, -pos.x, -pos.y, pixW);
+      }
+    }
+    prevPos = { x: pos.x, y: pos.y };
+    stepPhysics(dt);
+  }
+
+  flushVerts(newVerts, rgb);
+  composeToScreen();
+
+  // if winding down, stop once the pendulum is essentially still
+  if (stopping) {
+    const speed = Math.sqrt(vx*vx + vy*vy);
+    if (speed < 0.002) {
+      running = false;
+      stopping = false;
+      prevPos = null;
+      goBtn.textContent = 'CREATE';
+      goBtn.classList.remove('running');
+      presentIdle();
+      return;
+    }
+  }
+
+  if (running) animId = requestAnimationFrame(render);
+}
+
+// Draw the canvas color, then the accumulated art over it
+function composeToScreen() {
+  const s = canvas.width;
+  const bg = hexToRGB(bgColor);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, s, s);
+  gl.clearColor(bg[0], bg[1], bg[2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // art rgb is premultiplied
+  gl.useProgram(blitProg);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, artFBO.tex);
+  gl.uniform1i(blitUTex, 0);
+  drawQuad(blitProg, blitAPos);
+}
+
+// ============ Ghost preview ============
+// While idle, show a faint trace of the first few orbits so slider
+// changes are visible before committing to a run.
+function drawGhost() {
+  const s = canvas.width;
+  const dir = params.direction;
+  // amp * the 0.85 display scale reaches ~1.0 (canvas edge) at max Length
+  const amp = params.length * 1.18;
+  let gx = Math.cos(dir) * amp;
+  let gy = Math.sin(dir) * amp;
+  const push = 0.55 * params.length;
+  let gvx = -Math.sin(dir) * push;
+  let gvy = Math.cos(dir) * push;
+  const base = 2.1 / Math.sqrt(params.length);
+  const fx = base, fy = base * 1.017;
+
+  const pixW = params.thickness / s;
+  const verts = [];
+  const dt = 0.006;
+  let prevX = centerX + gx * 0.85, prevY = centerY + gy * 0.85;
+  const steps = Math.ceil(9 / dt / base); // a few full orbits
+  for (let i = 0; i < steps; i++) {
+    const r2 = gx * gx + gy * gy;
+    const nl = 1 + 0.22 * r2;
+    gvx += (-fx * fx * nl) * gx * dt;
+    gvy += (-fy * fy * nl) * gy * dt;
+    gx += gvx * dt;
+    gy += gvy * dt;
+    const x = centerX + gx * 0.85, y = centerY + gy * 0.85;
+    const dx = x - prevX, dy = y - prevY;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len > 0.00001) {
+      const nx = -dy / len * pixW;
+      const ny = dx / len * pixW;
+      const a = 0.22;
+      verts.push(
+        prevX-nx, prevY-ny, a,  prevX+nx, prevY+ny, a,  x-nx, y-ny, a,
+        x-nx, y-ny, a,  prevX+nx, prevY+ny, a,  x+nx, y+ny, a
+      );
+    }
+    prevX = x; prevY = y;
+  }
+  if (verts.length === 0) return;
+
+  const rgb = hexToRGB(currentColor);
+  const vertArr = new Float32Array(verts);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(lineProg);
+  gl.uniform3f(lineUColor, rgb[0], rgb[1], rgb[2]);
+  gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, vertArr, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(lineAPos);
+  gl.vertexAttribPointer(lineAPos, 2, gl.FLOAT, false, 12, 0);
+  gl.enableVertexAttribArray(lineAAlpha);
+  gl.vertexAttribPointer(lineAAlpha, 1, gl.FLOAT, false, 12, 8);
+  gl.drawArrays(gl.TRIANGLES, 0, vertArr.length / 3);
+}
+
+// Redraw the saved art plus the ghost overlay (used while idle)
+function presentIdle() {
+  if (running) return;
+  if (!artInit) initArt();
+  composeToScreen();
+  drawGhost();
+}
+
+// ============ Buttons ============
+const goBtn = document.getElementById('goBtn');
+goBtn.addEventListener('click', () => {
+  if (running) {
+    if (stopping) {
+      // double-tap: cut immediately
+      running = false;
+      stopping = false;
+      cancelAnimationFrame(animId);
+      prevPos = null;
+      goBtn.textContent = 'CREATE';
+      goBtn.classList.remove('running');
+      presentIdle();
+    } else {
+      // first tap: graceful wind-down
+      stopping = true;
+      goBtn.textContent = 'STOPPING…';
+    }
+  } else {
+    snapshotForUndo();
+    stopping = false;
+    colorHue = 0;
+    initPendulum();
+    prevPos = null;
+    running = true;
+    goBtn.textContent = 'STOP';
+    goBtn.classList.add('running');
+    render();
+  }
+});
+
+document.getElementById('layerBtn').addEventListener('click', () => {
+  if (running) {
+    running = false;
+    cancelAnimationFrame(animId);
+  }
+  prevPos = null;
+  goBtn.textContent = 'CREATE';
+  goBtn.classList.remove('running');
+  presentIdle();
+});
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+  if (running) {
+    running = false;
+    cancelAnimationFrame(animId);
+    goBtn.textContent = 'CREATE';
+    goBtn.classList.remove('running');
+  }
+  applyUndo();
+});
+
+// Surprise Me: randomize all settings and pick a random color
+document.getElementById('surpriseBtn').addEventListener('click', () => {
+  if (running) return;
+  const pick = colors[Math.floor(Math.random() * colors.length)];
+  currentColor = pick;
+  document.querySelectorAll('#palette .swatch').forEach(s => {
+    s.classList.toggle('active', s.style.background === pick || s.style.backgroundColor === pick);
+  });
+  const rp = (min, max) => min + Math.random() * (max - min);
+  document.querySelector('[data-param="length"]').value = params.length = rp(0.35, 1.0);
+  document.querySelector('[data-param="thickness"]').value = params.thickness = rp(1, 8);
+  document.querySelector('[data-param="direction"]').value = params.direction = rp(0, 6.28);
+  speedSlider.value = rp(0.5, 2.0);
+  presentIdle();
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  prevPos = null;
+  trailCount = 0;
+  goBtn.textContent = 'CREATE';
+  goBtn.classList.remove('running');
+  artInit = false;
+  initArt();
+  presentIdle();
+});
+
+// initial ghost so the canvas isn't empty on load
+presentIdle();
+window.addEventListener('resize', () => { artInit = false; presentIdle(); });
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  // redraw just the art (no ghost) before capturing
+  composeToScreen();
+
+  const a = document.createElement('a');
+  a.download = 'pendulum-art.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  presentIdle();
+});
+</script>
+</body>
+</html>
