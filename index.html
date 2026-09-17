@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pendulum Art</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #0d0b09;
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     display: flex;
     height: 100vh;
     overflow: hidden;
@@ -87,12 +87,11 @@
   }
 
   .section-label {
-    font-size: 0.55rem;
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    color: #6a5e4a;
+    font-size: 0.72rem;
+    color: #7a6e5e;
     text-align: center;
     margin-bottom: -6px;
+    font-weight: 300;
   }
 
   .slider-group {
@@ -106,10 +105,9 @@
     justify-content: space-between;
   }
   .slider-label {
-    font-size: 0.58rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #8a7a62;
+    font-size: 0.78rem;
+    color: #a89880;
+    font-weight: 300;
   }
   input[type="range"] {
     -webkit-appearance: none;
@@ -142,12 +140,11 @@
     border: none;
     border-radius: 6px;
     font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.88rem;
+    font-weight: 400;
     cursor: pointer;
     transition: transform 0.1s, opacity 0.15s;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
   .big-btn:active { transform: scale(0.98); }
   .big-btn:hover { opacity: 0.88; }
@@ -171,12 +168,10 @@
     background: none;
     border-radius: 6px;
     font-family: inherit;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 400;
     color: #7a6a52;
     cursor: pointer;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     transition: border-color 0.2s, color 0.2s;
   }
   #clearBtn:hover { border-color: #8a5a3a; color: #8a5a3a; }
@@ -192,10 +187,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.58rem;
-    color: #8a7a62;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 0.78rem;
+    color: #a89880;
+    font-weight: 300;
     cursor: pointer;
   }
   .fx-toggle input { display: none; }
@@ -276,12 +270,12 @@
   </div>
 
   <div class="actions">
-    <button class="big-btn" id="goBtn">CREATE</button>
-    <button class="big-btn" id="surpriseBtn">SURPRISE ME</button>
-    <button class="big-btn" id="layerBtn">+ NEW LAYER</button>
-    <button class="small-btn" id="undoBtn">UNDO LAYER</button>
-    <button class="small-btn" id="saveBtn">SAVE ART</button>
-    <button class="small-btn" id="clearBtn">START FRESH</button>
+    <button class="big-btn" id="goBtn">Create</button>
+    <button class="big-btn" id="surpriseBtn">Surprise Me</button>
+    <button class="big-btn" id="layerBtn">+ New Layer</button>
+    <button class="small-btn" id="undoBtn">Undo Layer</button>
+    <button class="small-btn" id="saveBtn">Save Art</button>
+    <button class="small-btn" id="clearBtn">Start Fresh</button>
   </div>
 </div>
 
@@ -726,7 +720,7 @@ function render() {
       running = false;
       stopping = false;
       prevPos = null;
-      goBtn.textContent = 'CREATE';
+      goBtn.textContent = 'Create';
       goBtn.classList.remove('running');
       presentIdle();
       return;
@@ -828,13 +822,13 @@ goBtn.addEventListener('click', () => {
       stopping = false;
       cancelAnimationFrame(animId);
       prevPos = null;
-      goBtn.textContent = 'CREATE';
+      goBtn.textContent = 'Create';
       goBtn.classList.remove('running');
       presentIdle();
     } else {
       // first tap: graceful wind-down
       stopping = true;
-      goBtn.textContent = 'STOPPING…';
+      goBtn.textContent = 'Stopping…';
     }
   } else {
     snapshotForUndo();
@@ -843,7 +837,7 @@ goBtn.addEventListener('click', () => {
     initPendulum();
     prevPos = null;
     running = true;
-    goBtn.textContent = 'STOP';
+    goBtn.textContent = 'Stop';
     goBtn.classList.add('running');
     render();
   }
@@ -855,7 +849,7 @@ document.getElementById('layerBtn').addEventListener('click', () => {
     cancelAnimationFrame(animId);
   }
   prevPos = null;
-  goBtn.textContent = 'CREATE';
+  goBtn.textContent = 'Create';
   goBtn.classList.remove('running');
   presentIdle();
 });
@@ -864,7 +858,7 @@ document.getElementById('undoBtn').addEventListener('click', () => {
   if (running) {
     running = false;
     cancelAnimationFrame(animId);
-    goBtn.textContent = 'CREATE';
+    goBtn.textContent = 'Create';
     goBtn.classList.remove('running');
   }
   applyUndo();
@@ -891,7 +885,7 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   if (animId) cancelAnimationFrame(animId);
   prevPos = null;
   trailCount = 0;
-  goBtn.textContent = 'CREATE';
+  goBtn.textContent = 'Create';
   goBtn.classList.remove('running');
   artInit = false;
   initArt();
